@@ -1,7 +1,6 @@
-import { requests, RequestsType } from '../api/api.tsx';
-
 export function LoginPage() {
-	function handleSubmit(event) {
+	
+	function handleSubmit(event: any) {
 		event.preventDefault();
 		const formData = new FormData(event.currentTarget);
 		const login = formData.get('login');

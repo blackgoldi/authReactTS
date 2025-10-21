@@ -1,9 +1,4 @@
-export enum RequestsType {
-	GET = 'GET',
-	POST = 'POST',
-}
-
-export async function requests(type: RequestsType, data: object): void {
+export async function requests() {
 	console.log(123);
 	try {
 		const response = await fetch('http://localhost:3000/api/login', {

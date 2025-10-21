@@ -1,12 +1,12 @@
 import { useRef, useState } from 'react';
 
 export function MouseEventWrapper() {
-	const mouseBlock = useRef(null);
+	const mouseBlock = useRef<HTMLDivElement | null>(null);
 
 	const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
 	const [touches, setTouches] = useState(false);
 
-	function handleMouseMove(e) {
+	function handleMouseMove(e: any) {
 		setTouches(e.targetTouches?.length ?? 0);
 		if (mouseBlock.current) {
 			const rect = mouseBlock.current.getBoundingClientRect();
@@ -14,7 +14,7 @@ export function MouseEventWrapper() {
 		}
 	}
 
-	function handleTouchMove(e) {
+	function handleTouchMove(e: any) {
 		setTouches(e.targetTouches.length);
 		const touchObj = e.targetTouches[0];
 		if (mouseBlock.current) {

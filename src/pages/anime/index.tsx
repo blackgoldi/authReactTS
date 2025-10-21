@@ -1,3 +1,3 @@
-import { animePage } from './ui/AnimePage';
+import { AnimePage } from './ui/AnimePage';
 
-export { animePage };
+export { AnimePage };

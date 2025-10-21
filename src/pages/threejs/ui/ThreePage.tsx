@@ -5,7 +5,7 @@ export function ThreePage() {
 	const width = 800;
 	const height = 800;
 
-	const mountRef = useRef(null);
+	const mountRef = useRef<HTMLDivElement | null>(null);
 
 	const scene = new THREE.Scene();
 	const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);

@@ -2,7 +2,7 @@ import { animate, utils } from 'animejs';
 import { useEffect, useRef } from 'react';
 
 export function AnimePage() {
-	const mountRef = useRef(null);
+	const mountRef = useRef<HTMLPreElement | null>(null);
 
 	useEffect(() => {
 		if (mountRef.current) {

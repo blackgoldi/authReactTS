@@ -1,21 +1,20 @@
-import { set } from 'animejs';
 import { useState } from 'react';
 
 export function TouchEventsPage() {
 	const [event, setEvent] = useState('');
 	const [touchPoint, setTouchPoint] = useState({ x: 0, y: 0 });
 
-	function handleTouchStart(e) {
+	function handleTouchStart(e: any) {
 		setEvent(e._reactName);
 	}
-	
-	function handleTouchMove(e) {
+
+	function handleTouchMove(e: any) {
 		setEvent(e._reactName);
 		const point = e.targetTouches[0];
 		setTouchPoint({ x: point.clientX, y: point.clientY });
 	}
-	
-	function handleTouchEnd(e) {
+
+	function handleTouchEnd(e: any) {
 		console.log(
 			`Конечный компонент:${e.target}\n Последняя позиция: X: ${e.changedTouches[0].clientX} Y: ${e.changedTouches[0].clientX}`
 		);

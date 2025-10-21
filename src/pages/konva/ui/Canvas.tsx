@@ -1,20 +1,15 @@
 import Konva from 'konva';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, type RefObject } from 'react';
 import { Rect, Layer, Stage } from 'react-konva';
 
-export function Canvas({ animRef }) {
+export function Canvas({ animRef }: { animRef: RefObject<any> }) {
 	console.log('canvas render');
 
-	const rectRef = useRef(null);
+	const rectRef = useRef<Konva.Rect | null>(null);
 
 	useEffect(() => {
 		if (rectRef.current) {
 			animRef.current = new Konva.Animation((frame) => {
-				const time = frame.time;
-				const timeDiff = frame.timeDiff;
-				const frameRate = frame.frameRate;
-
-				// Example: move rectangle in a circle
 				const radius = 50;
 				const x = radius * Math.cos((frame.time * 2 * Math.PI) / 2000) + 100;
 				const y = radius * Math.sin((frame.time * 2 * Math.PI) / 2000) + 100;
