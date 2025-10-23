@@ -1,36 +1,52 @@
 import Konva from 'konva';
 import { useEffect, useRef, type RefObject } from 'react';
-import { Rect, Layer, Stage } from 'react-konva';
+import { Rect, Layer, Stage, Circle, Transformer } from 'react-konva';
 
-export function Canvas({ animRef }: { animRef: RefObject<any> }) {
-	console.log('canvas render');
-
+export function Canvas({
+	animRef,
+	touchPos = { x: 100, y: 100, type: '' },
+}: {
+	animRef: RefObject<any>;
+	touchPos: { x: number; y: number; type: string };
+}) {
+	const stageRef = useRef<Konva.Stage | null>(null);
 	const rectRef = useRef<Konva.Rect | null>(null);
+	const circleRef = useRef<Konva.Circle | null>(null);
+	const touchRef = useRef<Konva.Circle | null>(null);
+	const transformerRef = useRef<Konva.Transformer | null>(null);
 
 	useEffect(() => {
-		if (rectRef.current) {
-			animRef.current = new Konva.Animation((frame) => {
-				const radius = 50;
-				const x = radius * Math.cos((frame.time * 2 * Math.PI) / 2000) + 100;
-				const y = radius * Math.sin((frame.time * 2 * Math.PI) / 2000) + 100;
-				if (!rectRef.current) return;
-				rectRef.current.position({ x, y });
-			}, rectRef.current.getLayer());
-
-			animRef.current.start();
-
-			return () => {
-				if (animRef.current) {
-					animRef.current.stop();
-				}
-			};
+		if (touchRef.current) {
+			touchRef.current.setPosition({ x: touchPos.x, y: touchPos.y });
 		}
-	});
+		// if (stageRef.current.getIntersection(touchPos)) {
+		// 	transformerRef.current?.nodes([stageRef.current.getIntersection(touchPos)]);
+		// } else {
+		// 	transformerRef.current?.nodes([]);
+		// }
+	}, [touchPos]);
+
+	function handleDragEnd(e) {
+		circleRef.current?.setPosition({
+			x: e.target.x(),
+			y: e.target.y(),
+		});
+	}
 
 	return (
-		<Stage width={500} height={500}>
+		<Stage ref={stageRef} width={window.innerWidth} height={500}>
 			<Layer>
-				<Rect ref={rectRef} x={50} y={50} width={50} height={50} fill="green" />
+				<Circle ref={touchRef} radius={30} fill={'#ff00ff'} />
+				<Circle
+					ref={circleRef}
+					radius={30}
+					x={390}
+					y={390}
+					fill={'#ffee00ff'}
+					draggable={true}
+					onDragEnd={handleDragEnd}
+				/>
+				<Rect ref={rectRef} x={190} y={190} width={50} height={50} fill="green" />
 			</Layer>
 		</Stage>
 	);

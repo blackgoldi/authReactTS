@@ -21,6 +21,10 @@ export function TouchEventsPage() {
 		setEvent(e._reactName);
 	}
 
+	function handleMove(e){
+		console.log(e);
+	}
+
 	return (
 		<div
 			style={{
@@ -34,6 +38,7 @@ export function TouchEventsPage() {
 			}}
 			onTouchStart={handleTouchStart}
 			onTouchMove={handleTouchMove}
+			onMouseMove={handleMove}
 			onTouchEnd={handleTouchEnd}>
 			<p>Событие {event}</p>
 			<p
