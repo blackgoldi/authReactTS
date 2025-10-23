@@ -13,16 +13,28 @@ export function Canvas({
 	const rectRef = useRef<Konva.Rect | null>(null);
 	const circleRef = useRef<Konva.Circle | null>(null);
 	const touchRef = useRef<Konva.Circle | null>(null);
-	console.log(animRef.current);
+
 	useEffect(() => {
 		if (touchRef.current) {
 			touchRef.current.setPosition({ x: touchPos.x, y: touchPos.y });
 		}
-		// if (stageRef.current.getIntersection(touchPos)) {
-		// 	transformerRef.current?.nodes([stageRef.current.getIntersection(touchPos)]);
-		// } else {
-		// 	transformerRef.current?.nodes([]);
-		// }
+		if (rectRef.current) {
+			animRef.current = new Konva.Animation((frame) => {
+				const radius = 50;
+				const x = radius * Math.cos((frame.time * 2 * Math.PI) / 2000) + 100;
+				const y = radius * Math.sin((frame.time * 2 * Math.PI) / 2000) + 100;
+				if (!rectRef.current) return;
+				rectRef.current.position({ x, y });
+			}, rectRef.current.getLayer());
+
+			animRef.current.start();
+
+			return () => {
+				if (animRef.current) {
+					animRef.current.stop();
+				}
+			};
+		}
 	}, [touchPos]);
 
 	function handleDragEnd(e: any) {
