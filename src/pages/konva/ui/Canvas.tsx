@@ -1,6 +1,6 @@
 import Konva from 'konva';
 import { useEffect, useRef, type RefObject } from 'react';
-import { Rect, Layer, Stage, Circle, Transformer } from 'react-konva';
+import { Rect, Layer, Stage, Circle } from 'react-konva';
 
 export function Canvas({
 	animRef,
@@ -13,8 +13,7 @@ export function Canvas({
 	const rectRef = useRef<Konva.Rect | null>(null);
 	const circleRef = useRef<Konva.Circle | null>(null);
 	const touchRef = useRef<Konva.Circle | null>(null);
-	const transformerRef = useRef<Konva.Transformer | null>(null);
-
+	console.log(animRef.current);
 	useEffect(() => {
 		if (touchRef.current) {
 			touchRef.current.setPosition({ x: touchPos.x, y: touchPos.y });
@@ -26,7 +25,7 @@ export function Canvas({
 		// }
 	}, [touchPos]);
 
-	function handleDragEnd(e) {
+	function handleDragEnd(e: any) {
 		circleRef.current?.setPosition({
 			x: e.target.x(),
 			y: e.target.y(),

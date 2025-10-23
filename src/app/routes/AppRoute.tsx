@@ -40,7 +40,7 @@ export const pages = [
 
 export const AppRoute = createBrowserRouter([
 	{
-		path: '/',
+		path: '/authReactTS',
 		element: <RootLayout />,
 		children: pages,
 	},

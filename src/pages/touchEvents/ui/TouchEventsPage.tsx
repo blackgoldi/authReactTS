@@ -21,7 +21,7 @@ export function TouchEventsPage() {
 		setEvent(e._reactName);
 	}
 
-	function handleMove(e){
+	function handleMove(e:any){
 		console.log(e);
 	}
 
