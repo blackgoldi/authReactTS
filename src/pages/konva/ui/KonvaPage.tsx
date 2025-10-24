@@ -1,12 +1,10 @@
 import { useRef } from 'react';
 import { Canvas2 } from './Canvas2';
 import { MouseEventWrapper } from './MouseEventWrapper';
-import Konva from 'konva';
 import { EventProvider } from '../EventProvider';
 
 export function KonvaPage() {
 	const wrRef = useRef<HTMLParagraphElement | null>(null);
-	const cvRef = useRef<Konva.Text | null>(null);
 
 	const posRef = useRef(null);
 	const posRef2 = useRef(null);
@@ -23,7 +21,7 @@ export function KonvaPage() {
 		changePos.invoke({ x, y });
 	}
 
-	function handleClick(e) {
+	function handleClick(_e:any) {
 		//useState
 
 		// if (wrRef.current == null || cvRef.current == null) return;
@@ -44,9 +42,7 @@ export function KonvaPage() {
 			<button onClick={handleClick}>Кнопка</button>
 			<MouseEventWrapper wrRef={wrRef} posRef={posRef} newPos={{ x: 0, y: 0 }} changePos={changePos} />
 			<Canvas2
-				cvRef={cvRef}
 				posRef={posRef2}
-				position={{ x: 0, y: 0 }}
 				onUpdate={handleNewPos}
 				changePos={changePos}
 			/>

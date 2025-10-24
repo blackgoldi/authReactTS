@@ -13,7 +13,7 @@ export function MouseEventWrapper({
 	changePos: EventProvider<{ x: number; y: number }>;
 }) {
 	console.log('div');
-
+	console.log(newPos.x,wrRef.current)
 	const mouseBlock = useRef<HTMLDivElement | null>(null);
 
 	const [pos, setPos] = useState({ x: 0, y: 0 });
@@ -21,11 +21,10 @@ export function MouseEventWrapper({
 	posRef.current = { pos: pos, change: handleChangePos };
 
 	function handleChangePos(x: number, y: number) {
-		console.log('изменились');
-		
+		console.log('изменились ' + x + y);
 	}
 
-	const [touches, setTouches] = useState(false);
+	// const [touches, setTouches] = useState(false);
 
 	useEffect(() => {
 		const handler = ({ x, y }: { x: number; y: number }) => {
@@ -81,7 +80,7 @@ export function MouseEventWrapper({
 			// onTouchMove={handleTouchMove}
 		>
 			<p style={{ top: 0, left: 0 }}>
-				X:{posRef.current.pos.x} Y:{posRef.current.pos.y} | {touches} прикосновений
+				X:{posRef.current.pos.x} Y:{posRef.current.pos.y}
 			</p>
 		</section>
 	);
