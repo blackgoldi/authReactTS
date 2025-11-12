@@ -8,6 +8,7 @@ export function KonvaPage() {
 
 	const posRef = useRef(null);
 	const posRef2 = useRef(null);
+	const rectangle = useRef(null);
 
 	function handleNewPos(x: number, y: number) {
 		// useState
@@ -21,7 +22,7 @@ export function KonvaPage() {
 		changePos.invoke({ x, y });
 	}
 
-	function handleClick(_e:any) {
+	function handleClick(_e: any) {
 		//useState
 
 		// if (wrRef.current == null || cvRef.current == null) return;
@@ -31,11 +32,13 @@ export function KonvaPage() {
 		// posRef.current.change(Math.random(), Math.random());
 		// posRef2.current.change(Math.random(), Math.random());
 
-		changePos.invoke({ x: Math.random(), y: Math.random() });
+		// changePos.invoke({ x: Math.random(), y: Math.random() });
+		changeAttrs.invoke({ width: Math.random() * 100, height: Math.random() * 100 });
 	}
 	console.log('render main');
 
 	const changePos = new EventProvider<{ x: number; y: number }>();
+	const changeAttrs = new EventProvider<{ width: number; height: number }>();
 
 	return (
 		<div style={{ position: 'relative' }}>
@@ -43,8 +46,10 @@ export function KonvaPage() {
 			<MouseEventWrapper wrRef={wrRef} posRef={posRef} newPos={{ x: 0, y: 0 }} changePos={changePos} />
 			<Canvas2
 				posRef={posRef2}
+				rectangle={rectangle}
 				onUpdate={handleNewPos}
 				changePos={changePos}
+				changeAttrs={changeAttrs}
 			/>
 		</div>
 	);

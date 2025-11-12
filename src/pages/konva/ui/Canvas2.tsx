@@ -5,12 +5,16 @@ import { EventProvider } from '../EventProvider';
 
 export function Canvas2({
 	posRef,
+	rectangle,
 	onUpdate,
 	changePos,
+	changeAttrs,
 }: {
 	posRef: RefObject<{ pos: { x: number; y: number }; change: (x: number, y: number) => void } | null>;
+	rectangle: RefObject<{ ref: RefObject<Konva.Rect | null>; change: (width: number, height: number) => void } | null>;
 	onUpdate: (x: number, y: number) => void;
 	changePos: EventProvider<{ x: number; y: number }>;
+	changeAttrs: EventProvider<{ width: number; height: number }>;
 }) {
 	console.log('canvas');
 
@@ -20,8 +24,17 @@ export function Canvas2({
 			textRef.current.setText(`X:${x} Y:${y}`);
 		};
 		changePos.subscribe(handler);
+
+		const handler2 = ({ width, height }: { width: number; height: number }) => {
+			if (!rectRef.current) return;
+			rectRef.current.setAttr('width', width);
+			rectRef.current.setAttr('height', height);
+		};
+		changeAttrs.subscribe(handler2);
+
 		return () => {
 			changePos.unsubscribe(handler);
+			changeAttrs.unsubscribe(handler2);
 		};
 	});
 
@@ -55,6 +68,15 @@ export function Canvas2({
 		if (!textRef.current) return;
 
 		textRef.current.setText(`X:${x} Y:${y}`);
+	}
+
+	rectangle.current = { ref: rectRef, change: hangleChangeAttrs };
+
+	function hangleChangeAttrs(width: number, height: number) {
+		if (!rectRef.current) return;
+
+		rectRef.current.setAttr('width', width);
+		rectRef.current.setAttr('height', height);
 	}
 
 	useEffect(() => {
@@ -129,7 +151,7 @@ export function Canvas2({
 		if (event_name == 'touchstart') {
 			console.log(e);
 		}
-		console.log(e.evt.which)
+		console.log(e.evt.which);
 
 		target.current?.setText('Yes');
 		target.current?.setAttr('fill', '#00FF00');
@@ -230,7 +252,7 @@ export function Canvas2({
 					// onDragMove={handleDragMove}
 					onDragEnd={handleDragEnd}
 				/>
-				<Rect ref={rectRef} x={190} y={190} width={50} height={50} fill="green" />
+				<Rect ref={rectRef} width={50} height={50} fill="green" />
 				<Text
 					ref={textRef}
 					text={`X:${posRef.current.pos.x} Y:${posRef.current.pos.y}`}
