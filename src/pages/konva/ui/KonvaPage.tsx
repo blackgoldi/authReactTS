@@ -10,7 +10,6 @@ export function KonvaPage() {
 	const posRef2 = useRef(null);
 	const rectangle = useRef(null);
 
-
 	function handleNewPos(x: number, y: number) {
 		// useState
 
@@ -24,7 +23,7 @@ export function KonvaPage() {
 	}
 
 	function handleClick(e: any) {
-		console.log(e)
+		console.log(e);
 		//useState
 
 		// if (wrRef.current == null || cvRef.current == null) return;
@@ -45,12 +44,7 @@ export function KonvaPage() {
 	return (
 		<div style={{ position: 'relative', overflow: 'hidden' }}>
 			<button onClick={handleClick}>Кнопка</button>
-			<MouseEventWrapper
-				wrRef={wrRef}
-				posRef={posRef}
-				newPos={{ x: 0, y: 0 }}
-				changePos={changePos}
-			/>
+			<MouseEventWrapper wrRef={wrRef} posRef={posRef} newPos={{ x: 0, y: 0 }} changePos={changePos} />
 			<Canvas2
 				posRef={posRef2}
 				rectangle={rectangle}
@@ -58,6 +52,7 @@ export function KonvaPage() {
 				changePos={changePos}
 				changeAttrs={changeAttrs}
 			/>
+			
 		</div>
 	);
 }

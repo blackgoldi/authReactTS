@@ -1,6 +1,6 @@
 import Konva from 'konva';
-import React, { useEffect, useRef, type RefObject } from 'react';
-import { Rect, Layer, Stage, Circle, Text, Group } from 'react-konva';
+import React, { useEffect, useRef, useState, type RefObject } from 'react';
+import { Rect, Layer, Stage, Circle, Text, Group, Line } from 'react-konva';
 import { EventProvider } from '../EventProvider';
 import type { KonvaEventObject, Node, NodeConfig } from 'konva/lib/Node';
 
@@ -47,12 +47,15 @@ export function Canvas2({
 	const animRef = useRef<Konva.Animation | null>(null);
 	const stageRef = useRef<Konva.Stage | null>(null);
 
+	const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+
 	// const stageDragRef = useRef<boolean>(false);
 	// const stageScaleRef = useRef<{ x: number; y: number }>({ x: 1, y: 1 });
 	// const stagePosRef = useRef<{ x: number; y: number }>({ x: 1, y: 1 });
 	// const stageLastCenterRef = useRef<{ x: number; y: number }>({ x: 1, y: 1 });
 	const stageLastDistRef = useRef<number | null>(null);
 
+	const pointerRef = useRef<Konva.Group | null>(null);
 	const rectRef = useRef<Konva.Rect | null>(null);
 	const circleRef = useRef<Konva.Circle | null>(null);
 	const touchRef = useRef<Konva.Circle | null>(null);
@@ -66,6 +69,10 @@ export function Canvas2({
 	// const prevPos = useState({ x: 190, y: 190 });
 
 	const touchDownRef = useRef<Konva.Text | null>(null);
+	const touchStartRef = useRef<TouchEvent | null>(null);
+
+	const wrapperDiv = useRef<HTMLDivElement | null>(null);
+
 	// const touchDownPressureRef = useRef<Konva.Text | null>(null);
 	const touchUpRef = useRef<Konva.Text | null>(null);
 	const touchMoveRef = useRef<Konva.Text | null>(null);
@@ -252,56 +259,70 @@ export function Canvas2({
 
 	const timers = new Map();
 
-	const lastDist = React.useRef<number>(0);
-	const lastStrokeColor = React.useRef<string>('');
-	const activeShape = React.useRef<Konva.Shape | Konva.Stage | null>(null);
+	function handleTap(e: KonvaEventObject<Event, Node<NodeConfig>>) {
+		
+		if(!(e.evt instanceof TouchEvent)) return;
+		const point = e.evt.changedTouches[0];
+		const rightPos = getResponsivePos(point.clientX, point.clientY);
+		if (!rightPos) return;
+		onUpdate(rightPos.x, rightPos.y);
+		// posRef.current?.change(rightPos.x, rightPos.y);
+		console.log('tap', posRef.current?.pos);
+		pointerRef.current?.setAttrs({
+			x: rightPos?.x,
+			y: rightPos?.y,
+		});
+	}
 
-	function handleTapShape(e: KonvaEventObject<Event, Node<NodeConfig>>) {
-		const shape = e.target;
-		if (shape.nodeType != 'Stage') {
-			if (activeShape.current != shape && activeShape.current) {
-				activeShape.current.setAttr('stroke', lastStrokeColor.current);
-			}
-			activeShape.current = shape;
-			lastStrokeColor.current = activeShape.current.getAttr('stroke');
-			activeShape.current.setAttr('stroke', '#FF0F0F');
-		} else if (shape.nodeType == 'Stage' && activeShape.current) {
-			activeShape.current.setAttr('stroke', lastStrokeColor.current);
-			activeShape.current = null;
-		}
+	function handleDragMove(e: any) {
+		const point = e.evt.touches[0];
+		const rightPos = getResponsivePos(point.clientX, point.clientY);
+		if (!rightPos) return;
+		posRef.current?.change(rightPos.x, rightPos.y);
+		pointerRef.current?.setAttrs({
+			x: rightPos?.x,
+			y: rightPos?.y,
+		});
+		setContextMenu(null);
 	}
 
 	function handleTouchMove(e: KonvaEventObject<TouchEvent, Node<NodeConfig>>) {
-		const touch1 = e.evt.touches[0];
-		const touch2 = e.evt.touches[1];
+		const point = e.evt.touches[0];
+		const rightPos = getResponsivePos(point.clientX, point.clientY);
+		if (!rightPos) return;
+		onUpdate(rightPos.x, rightPos.y);
+		// posRef.current?.change(rightPos.x, rightPos.y);
+		console.log('move', posRef.current?.pos);
+		pointerRef.current?.setAttrs({
+			x: rightPos?.x,
+			y: rightPos?.y,
+		});
+	}
 
-		if (touch1 && touch2 && activeShape) {
-			const dist = getDistance(
-				{
-					x: touch1.clientX,
-					y: touch1.clientY,
-				},
-				{
-					x: touch2.clientX,
-					y: touch2.clientY,
-				}
-			);
-			if (!lastDist.current) {
-				lastDist.current = dist;
-				return;
-			}
-			if (!activeShape.current) return;
-			const scale = (Number(activeShape.current.scaleX) * dist) / lastDist.current;
-			activeShape.current?.setAttr('scale', scale);
+	function handleTouchStart(e: KonvaEventObject<TouchEvent, Node<NodeConfig>>) {
+		touchStartRef.current = e.evt;
+	}
 
-			lastDist.current = scale;
+	function handleTouchEnd(e: KonvaEventObject<TouchEvent, Node<NodeConfig>>) {
+		if (!touchStartRef.current) return;
+		const point = e.evt.changedTouches[0];
+		const rightPos = getResponsivePos(point.clientX, point.clientY);
+		if (!rightPos) return;
+		onUpdate(rightPos.x, rightPos.y);
+		if (e.evt.timeStamp - touchStartRef.current.timeStamp > 400) {
+			//Нужна проверка на позицию
+
+			if (!posRef.current) return;
+			setContextMenu({ x: rightPos?.x, y: rightPos?.y });
+		} else {
+			setContextMenu(null);
 		}
 	}
 
 	function handleTouchForce(e: any) {
 		if (!forceRef.current) return;
 
-		forceRef.current.setAttr('text', e.changedTouches[0].force);
+		forceRef.current.setAttr('text', e.evt.changedTouches[0].force);
 		forceRef.current?.setAttr('fill', '#00FF00');
 
 		const timer = setTimeout(() => {
@@ -315,174 +336,223 @@ export function Canvas2({
 		timers.set('force', timer);
 	}
 
-	function getDistance(p1: { x: number; y: number }, p2: { x: number; y: number }) {
-		return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+	// function getDistance(p1: { x: number; y: number }, p2: { x: number; y: number }) {
+	// 	return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+	// }
+
+	function handleCreate(e: any) {
+		console.log(e);
+		if (!stageRef.current) return;
+		const layer = stageRef.current.getChildren()[0];
+		layer.add(
+			new Konva.Rect({
+				x: contextMenu?.x,
+				y: contextMenu?.y,
+				width: 50,
+				height: 50,
+				fill: '#FFFFFF',
+				draggable: true,
+			})
+		);
+		layer.batchDraw();
+		setContextMenu(null);
+	}
+
+	function getResponsivePos(x: number, y: number) {
+		if (!wrapperDiv.current) return;
+		const wrapper = wrapperDiv.current.getBoundingClientRect();
+		return { x: Number((x - wrapper.left).toFixed(0)), y: Number((y - wrapper.top).toFixed(0)) };
 	}
 
 	return (
-		<Stage
-			ref={stageRef}
-			width={window.innerWidth}
-			height={window.innerHeight}
-			onMouseDown={(e) => {
-				handleStartSelection(e.evt);
-				handleEvent(e, mouseDownRef);
-			}}
-			onTouchStart={(e) => {
-				handleEvent(e, touchDownRef);
-			}}
-			onMouseUp={(e) => {
-				handleEndSelection(e.evt);
-				handleEvent(e, mouseUpRef);
-			}}
-			onTouchEnd={(e) => {
-				stageLastDistRef.current = 0;
-				stageLastDistRef.current = 0;
-				handleEvent(e, touchUpRef);
-			}}
-			onClick={(e) => {
-				handleEvent(e, mouseClickRef);
-			}}
-			onTap={(e) => {
-				handleTapShape(e);
-				console.log(e.evt)
-				handleTouchForce(e);
-				handleEvent(e, tapRef);
-			}}
-			onDblClick={(e) => handleEvent(e, mouseDblClickRef)}
-			onDblTap={(e) => {
-				handleEvent(e, dblTapRef);
-			}}
-			onMouseMove={(e) => {
-				handleSelectionChange(e.evt);
-				handleChangePos(e);
-				handleEvent(e, mouseMoveRef);
-			}}
-			onTouchMove={(e) => {
-				e.evt.preventDefault();
-				handleEvent(e, touchMoveRef);
-				handleTouchMove(e);
-				handleTouchForce(e.evt);
-			}}
-			onDragStart={(e) => handleEvent(e, dragStartRef)}
-			onDragMove={(e) => handleEvent(e, dragMoveRef)}
-			onDragEnd={(e) => {
-				handleEvent(e, dragEndRef);
-			}}
-			onMouseLeave={(e) => handleEvent(e, mouseLeaveRef)}
-			onWheel={(e) => handleEvent(e, mouseWheelRef)}>
-			<Layer>
-				<Circle ref={touchRef} radius={30} draggable={true} fill={'#ff00ff'} />
-				<Circle
-					ref={circleRef}
-					radius={30}
-					x={390}
-					y={390}
-					fill={'#ffee00ff'}
-					draggable={true}
-					// onDragMove={handleDragMove}
-					// onDragEnd={handleDragEnd}
-				/>
-				<Rect ref={rectRef} width={50} height={50} fill="green" />
-				<Text
-					ref={textRef}
-					text={`X:${posRef.current.pos.x} Y:${posRef.current.pos.y}`}
-					x={250}
-					y={250}
-					fill={'#FFFFFF'}
-				/>
+		<div ref={wrapperDiv}>
+			<Stage
+				ref={stageRef}
+				width={window.innerWidth}
+				height={window.innerHeight}
+				onMouseDown={(e) => {
+					handleStartSelection(e.evt);
+					handleEvent(e, mouseDownRef);
+				}}
+				onTouchStart={(e) => {
+					handleTouchStart(e);
+					handleEvent(e, touchDownRef);
+				}}
+				onMouseUp={(e) => {
+					handleEndSelection(e.evt);
+					handleEvent(e, mouseUpRef);
+				}}
+				onTouchEnd={(e) => {
+					stageLastDistRef.current = 0;
+					stageLastDistRef.current = 0;
+					handleTouchEnd(e);
+					handleEvent(e, touchUpRef);
+				}}
+				onClick={(e) => {
+					handleEvent(e, mouseClickRef);
+				}}
+				onTap={(e) => {
+					handleTap(e);
+					handleTouchForce(e);
+					handleEvent(e, tapRef);
+				}}
+				onDblClick={(e) => handleEvent(e, mouseDblClickRef)}
+				onDblTap={(e) => {
+					handleEvent(e, dblTapRef);
+				}}
+				onMouseMove={(e) => {
+					handleSelectionChange(e.evt);
+					handleChangePos(e);
+					handleEvent(e, mouseMoveRef);
+				}}
+				onTouchMove={(e) => {
+					e.evt.preventDefault();
+					handleEvent(e, touchMoveRef);
+					handleTouchMove(e);
+					handleTouchForce(e);
+				}}
+				onDragStart={(e) => handleEvent(e, dragStartRef)}
+				onDragMove={(e) => {
+					handleEvent(e, dragMoveRef);
+					handleDragMove(e);
+				}}
+				onDragEnd={(e) => {
+					handleEvent(e, dragEndRef);
+				}}
+				onMouseLeave={(e) => handleEvent(e, mouseLeaveRef)}
+				onWheel={(e) => handleEvent(e, mouseWheelRef)}>
+				<Layer>
+					<Circle ref={touchRef} radius={30} draggable={true} fill={'#ff00ff'} />
+					<Circle
+						ref={circleRef}
+						radius={30}
+						x={390}
+						y={390}
+						fill={'#ffee00ff'}
+						draggable={true}
+						// onDragMove={handleDragMove}
+						// onDragEnd={handleDragEnd}
+					/>
+					<Rect ref={rectRef} width={50} height={50} fill="green" />
+					<Text ref={textRef} x={250} y={250} fill={'#FFFFFF'} />
 
-				<Rect
-					ref={selectionRect}
-					visible={false}
-					fill="transparent"
-					stroke="#0080FF"
-					strokeWidth={1}
-					dash={[2, 2]}
-				/>
+					<Rect
+						ref={selectionRect}
+						visible={false}
+						fill="transparent"
+						stroke="#0080FF"
+						strokeWidth={1}
+						dash={[2, 2]}
+					/>
 
-				<Group draggable={true} x={300} y={50}>
-					<Rect width={150} height={300} stroke={'#FFFFFF'} strokeWidth={1} />
-					<Text text="Touch обработчики" x={10} y={10} fontVariant="bold" fill={'#FFFFFF'} />
-					<Group x={10} y={30}>
-						<Text text="onTouchStart" fill={'#FFFFFF'} />
-						<Text ref={touchDownRef} text="No" x={80} fontVariant="bold" fill={'#FF0000'} />
+					<Group draggable={true} x={300} y={50}>
+						<Rect width={150} height={300} stroke={'#FFFFFF'} strokeWidth={1} />
+						<Text text="Touch обработчики" x={10} y={10} fontVariant="bold" fill={'#FFFFFF'} />
+						<Group x={10} y={30}>
+							<Text text="onTouchStart" fill={'#FFFFFF'} />
+							<Text ref={touchDownRef} text="No" x={80} fontVariant="bold" fill={'#FF0000'} />
+						</Group>
+						<Group x={10} y={50}>
+							<Text text="pointerPressure" fill={'#FFFFFF'} />
+							<Text ref={forceRef} text="0" x={90} fontVariant="bold" fill={'#FF0000'} />
+						</Group>
+						<Group x={10} y={70}>
+							<Text text="onTouchMove" fill={'#FFFFFF'} />
+							<Text ref={touchMoveRef} text="No" x={80} fontVariant="bold" fill={'#FF0000'} />
+						</Group>
+						<Group x={10} y={90}>
+							<Text text="onTouchEnd" fill={'#FFFFFF'} />
+							<Text ref={touchUpRef} text="No" x={80} fontVariant="bold" fill={'#FF0000'} />
+						</Group>
+						<Group x={10} y={110}>
+							<Text text="onTap" fill={'#FFFFFF'} />
+							<Text ref={tapRef} text="No" x={80} fontVariant="bold" fill={'#FF0000'} />
+						</Group>
+						<Group x={10} y={130}>
+							<Text text="onDblTap" fill={'#FFFFFF'} />
+							<Text ref={dblTapRef} text="No" x={90} fontVariant="bold" fill={'#FF0000'} />
+						</Group>
+						<Group x={10} y={150}>
+							<Text text="pointerZoom" fill={'#FFFFFF'} />
+							<Text ref={touchZoomRef} text="0" x={90} fontVariant="bold" fill={'#FF0000'} />
+						</Group>
 					</Group>
-					<Group x={10} y={50}>
-						<Text text="pointerPressure" fill={'#FFFFFF'} />
-						<Text ref={forceRef} text="0" x={90} fontVariant="bold" fill={'#FF0000'} />
+					<Group draggable={true} x={150} y={50}>
+						<Rect width={150} height={300} stroke={'#FFFFFF'} strokeWidth={1} />
+						<Text text="Mouse обработчики" x={10} y={10} fontVariant="bold" fill={'#FFFFFF'} />
+						<Group x={10} y={30}>
+							<Text text="mouseDown" fill={'#FFFFFF'} />
+							<Text ref={mouseDownRef} text="No" x={80} fontVariant="bold" fill={'#FF0000'} />
+						</Group>
+						<Group x={10} y={50}>
+							<Text text="mouseMove" fill={'#FFFFFF'} />
+							<Text ref={mouseMoveRef} text="No" x={80} fontVariant="bold" fill={'#FF0000'} />
+						</Group>
+						<Group x={10} y={70}>
+							<Text text="mouseUp" fill={'#FFFFFF'} />
+							<Text ref={mouseUpRef} text="No" x={80} fontVariant="bold" fill={'#FF0000'} />
+						</Group>
+						<Group x={10} y={90}>
+							<Text text="mouseClick" fill={'#FFFFFF'} />
+							<Text ref={mouseClickRef} text="No" x={80} fontVariant="bold" fill={'#FF0000'} />
+						</Group>
+						<Group x={10} y={110}>
+							<Text text="mouseDblClick" fill={'#FFFFFF'} />
+							<Text ref={mouseDblClickRef} text="No" x={90} fontVariant="bold" fill={'#FF0000'} />
+						</Group>
+						<Group x={10} y={130}>
+							<Text text="mouseLeave" fill={'#FFFFFF'} />
+							<Text ref={mouseLeaveRef} text="No" x={90} fontVariant="bold" fill={'#FF0000'} />
+						</Group>
+						<Group x={10} y={150}>
+							<Text text="mouseScroll" fill={'#FFFFFF'} />
+							<Text ref={mouseWheelRef} text="No" x={90} fontVariant="bold" fill={'#FF0000'} />
+						</Group>
 					</Group>
-					<Group x={10} y={70}>
-						<Text text="onTouchMove" fill={'#FFFFFF'} />
-						<Text ref={touchMoveRef} text="No" x={80} fontVariant="bold" fill={'#FF0000'} />
+					<Group draggable={true} x={0} y={50}>
+						<Rect width={150} height={300} stroke={'#FFFFFF'} strokeWidth={1} />
+						<Text text="Drag обработчики" x={10} y={10} fontVariant="bold" fill={'#FFFFFF'} />
+						<Group x={10} y={30}>
+							<Text text="dragStart" fill={'#FFFFFF'} />
+							<Text ref={dragStartRef} text="No" x={80} fontVariant="bold" fill={'#FF0000'} />
+						</Group>
+						<Group x={10} y={50}>
+							<Text text="dragMove" fill={'#FFFFFF'} />
+							<Text ref={dragMoveRef} text="No" x={80} fontVariant="bold" fill={'#FF0000'} />
+						</Group>
+						<Group x={10} y={70}>
+							<Text text="dragEnd" fill={'#FFFFFF'} />
+							<Text ref={dragEndRef} text="No" x={80} fontVariant="bold" fill={'#FF0000'} />
+						</Group>
 					</Group>
-					<Group x={10} y={90}>
-						<Text text="onTouchEnd" fill={'#FFFFFF'} />
-						<Text ref={touchUpRef} text="No" x={80} fontVariant="bold" fill={'#FF0000'} />
+					<Group ref={pointerRef} x={100} y={100}>
+						<Line strokeWidth={1} stroke="#FFFFFF" points={[0, -15, 0, 15]} />
+						<Line strokeWidth={1} stroke="#FFFFFF" points={[-15, 0, 15, 0]} />
+						<Text ref={textRef} x={15} y={-15} fill="#FFFFFF" />
 					</Group>
-					<Group x={10} y={110}>
-						<Text text="onTap" fill={'#FFFFFF'} />
-						<Text ref={tapRef} text="No" x={80} fontVariant="bold" fill={'#FF0000'} />
-					</Group>
-					<Group x={10} y={130}>
-						<Text text="onDblTap" fill={'#FFFFFF'} />
-						<Text ref={dblTapRef} text="No" x={90} fontVariant="bold" fill={'#FF0000'} />
-					</Group>
-					<Group x={10} y={150}>
-						<Text text="pointerZoom" fill={'#FFFFFF'} />
-						<Text ref={touchZoomRef} text="0" x={90} fontVariant="bold" fill={'#FF0000'} />
-					</Group>
-				</Group>
-				<Group draggable={true} x={150} y={50}>
-					<Rect width={150} height={300} stroke={'#FFFFFF'} strokeWidth={1} />
-					<Text text="Mouse обработчики" x={10} y={10} fontVariant="bold" fill={'#FFFFFF'} />
-					<Group x={10} y={30}>
-						<Text text="mouseDown" fill={'#FFFFFF'} />
-						<Text ref={mouseDownRef} text="No" x={80} fontVariant="bold" fill={'#FF0000'} />
-					</Group>
-					<Group x={10} y={50}>
-						<Text text="mouseMove" fill={'#FFFFFF'} />
-						<Text ref={mouseMoveRef} text="No" x={80} fontVariant="bold" fill={'#FF0000'} />
-					</Group>
-					<Group x={10} y={70}>
-						<Text text="mouseUp" fill={'#FFFFFF'} />
-						<Text ref={mouseUpRef} text="No" x={80} fontVariant="bold" fill={'#FF0000'} />
-					</Group>
-					<Group x={10} y={90}>
-						<Text text="mouseClick" fill={'#FFFFFF'} />
-						<Text ref={mouseClickRef} text="No" x={80} fontVariant="bold" fill={'#FF0000'} />
-					</Group>
-					<Group x={10} y={110}>
-						<Text text="mouseDblClick" fill={'#FFFFFF'} />
-						<Text ref={mouseDblClickRef} text="No" x={90} fontVariant="bold" fill={'#FF0000'} />
-					</Group>
-					<Group x={10} y={130}>
-						<Text text="mouseLeave" fill={'#FFFFFF'} />
-						<Text ref={mouseLeaveRef} text="No" x={90} fontVariant="bold" fill={'#FF0000'} />
-					</Group>
-					<Group x={10} y={150}>
-						<Text text="mouseScroll" fill={'#FFFFFF'} />
-						<Text ref={mouseWheelRef} text="No" x={90} fontVariant="bold" fill={'#FF0000'} />
-					</Group>
-				</Group>
-				<Group draggable={true} x={0} y={50}>
-					<Rect width={150} height={300} stroke={'#FFFFFF'} strokeWidth={1} />
-					<Text text="Drag обработчики" x={10} y={10} fontVariant="bold" fill={'#FFFFFF'} />
-					<Group x={10} y={30}>
-						<Text text="dragStart" fill={'#FFFFFF'} />
-						<Text ref={dragStartRef} text="No" x={80} fontVariant="bold" fill={'#FF0000'} />
-					</Group>
-					<Group x={10} y={50}>
-						<Text text="dragMove" fill={'#FFFFFF'} />
-						<Text ref={dragMoveRef} text="No" x={80} fontVariant="bold" fill={'#FF0000'} />
-					</Group>
-					<Group x={10} y={70}>
-						<Text text="dragEnd" fill={'#FFFFFF'} />
-						<Text ref={dragEndRef} text="No" x={80} fontVariant="bold" fill={'#FF0000'} />
-					</Group>
-				</Group>
-				{/* <Text ref={cvRef} x={250} y={250} fill={'#FFFFFF'} /> */}
-			</Layer>
-		</Stage>
+				</Layer>
+			</Stage>
+			<div
+				style={{
+					display: contextMenu ? 'flex' : 'none',
+					position: 'absolute',
+					top: contextMenu?.y,
+					left: contextMenu?.x,
+					width: '20vw',
+					height: '20vh',
+					stroke: '#FFFFFF',
+					strokeWidth: 5,
+				}}>
+				<ul>
+					<li>
+						<button onClick={handleCreate}>Создать квадрат</button>
+					</li>
+					<li>Пункт меню</li>
+					<li>Пункт меню</li>
+					<li>Пункт меню</li>
+					<li>Пункт меню</li>
+				</ul>
+			</div>
+		</div>
 	);
 }

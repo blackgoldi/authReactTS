@@ -5,9 +5,10 @@
 	justify-content: space-between;
 	width: 100%;
 	border-bottom: 1px solid white;
+	overflow: hidden;
 }
 
-nav {
+.nav {
 	height: 60px;
 	width: 300px;
 	display: flex;
@@ -18,18 +19,18 @@ nav {
 	box-sizing: border-box;
 }
 
-li {
+.li {
 	padding: 5px;
 	text-transform: uppercase;
 	border: 2px solid white;
 }
 
-a {
+.a {
 	color: white;
 	text-decoration: none;
 }
 
-a:hover {
+.a:hover {
 	color: green
 }
 
