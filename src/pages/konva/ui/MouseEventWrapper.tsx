@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import type { EventProvider } from '../EventProvider';
 
@@ -12,10 +13,9 @@ export function MouseEventWrapper({
 	newPos: { x: number; y: number };
 	changePos: EventProvider<{ x: number; y: number }>;
 }) {
-	console.log('div');
-	console.log(newPos.x,wrRef.current)
+	// console.log('div');
 	const mouseBlock = useRef<HTMLDivElement | null>(null);
-
+	console.log(wrRef, newPos);
 	const [pos, setPos] = useState({ x: 0, y: 0 });
 
 	posRef.current = { pos: pos, change: handleChangePos };
